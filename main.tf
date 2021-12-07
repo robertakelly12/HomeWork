@@ -19,6 +19,7 @@ resource "aws_s3_bucket" "great" {
 resource "aws_kms_key" "mykey" {
   description = "This key is used to encrypt bucket objects"
   deletion_window_in_days = 10
+  policy = aws_iam_policy.mykey.id
 }
 
 resource "aws_iam_role" "access_role" {
@@ -43,10 +44,9 @@ resource "aws_iam_role" "access_role" {
   }
 }
 
-resource "aws_iam_policy" "s3_policy" {
-  name        = "Allow_all"
-  path        = "/"
-  description = "My s3 bucket role"
+resource "aws_iam_role_policy" "test_policy" {
+  name = "test_policy"
+  role = aws_iam_role.access_role.id
 
 
   policy = jsonencode({
@@ -58,6 +58,28 @@ resource "aws_iam_policy" "s3_policy" {
       "Effect": "Allow",
       "Resource": "*",
       "Principal": "*"
+    }
+  ]
+  })
+}
+
+resource "aws_iam_policy" "mykey" {
+  name        = "kms_key"
+  path        = "/"
+  description = "My kms policy"
+
+  policy = jsonencode({
+    "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1638902362466",
+      "Action": [
+        "kms:CancelKeyDeletion",
+        "kms:Decrypt",
+        "kms:DisableKey"
+      ],
+      "Effect": "Deny",
+      "Resource": "*"
     }
   ]
   })
